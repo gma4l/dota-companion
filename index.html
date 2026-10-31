@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dota Companion — драфт и разбор матчей</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">◆</span>
+      <div>
+        <h1>Dota Companion</h1>
+        <p class="sub">Драфт и разбор матчей для обычного матчмейкинга</p>
+      </div>
+    </div>
+    <nav class="tabs">
+      <button class="tab active" data-view="draft">Драфт</button>
+      <button class="tab" data-view="match">Матч</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ─────────── Драфт ─────────── -->
+    <section class="view active" id="view-draft">
+      <div class="side-row">
+        <span class="muted">Ты играешь за:</span>
+        <button class="side-btn active" data-side="radiant">Radiant</button>
+        <button class="side-btn" data-side="dire">Dire</button>
+        <button class="ghost" id="resetBtn">Сбросить драфт</button>
+        <span class="hint">Своего героя и сторону локальная версия берёт из игры, здесь — вручную.</span>
+      </div>
+
+      <div class="draft-layout">
+        <aside class="picker">
+          <input type="text" id="search" placeholder="Поиск героя: axe, анти-маг…" autocomplete="off">
+          <div class="targets" id="targets">
+            <button class="target active" data-target="direPicks">Враги</button>
+            <button class="target" data-target="radiantPicks">Союзники</button>
+            <button class="target" data-target="direBans">Баны врагов</button>
+            <button class="target" data-target="radiantBans">Наши баны</button>
+          </div>
+          <div class="grid" id="grid"></div>
+        </aside>
+
+        <div class="result">
+          <div class="picked" id="picked"></div>
+          <div class="recs" id="recs"></div>
+          <div class="analysis" id="analysis"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────── Матч ─────────── -->
+    <section class="view" id="view-match">
+      <div class="search-card">
+        <label for="matchId">ID матча</label>
+        <div class="search-row">
+          <input type="text" id="matchId" placeholder="Например: 4156228387 или ссылка" autocomplete="off">
+          <button id="loadMatch">Разобрать</button>
+        </div>
+        <p class="hint">Данные берутся из OpenDota. Разбор — по правилам, без ИИ.</p>
+      </div>
+      <div id="matchResult"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    Публичная версия без ИИ. Полный разбор с локальной моделью — в настольной версии.
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
