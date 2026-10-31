@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dota 2 — Трекер прогресса</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="logo">
+      <span class="logo-icon">📈</span>
+      <div>
+        <h1>Трекер прогресса</h1>
+        <p class="subtitle">История матчей и паттерны, которых не видно в отдельной игре</p>
+      </div>
+      <a class="nav-link" href="index.html">← К анализатору</a>
+      <button id="theme-toggle" class="ghost" title="Светлая / тёмная тема" aria-label="Переключить тему">🌙</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="search-card">
+      <label for="account">Профиль Steam</label>
+      <div class="search-row">
+        <input
+          id="account"
+          type="text"
+          placeholder="Ссылка на профиль, Steam ID или account_id"
+          autocomplete="off"
+        />
+        <select id="depth" class="depth-select" aria-label="Глубина загрузки">
+          <option value="1">500 матчей</option>
+          <option value="3">1500 матчей</option>
+          <option value="5">2500 матчей</option>
+        </select>
+        <button id="sync-btn" type="button">Загрузить</button>
+      </div>
+      <p class="hint">
+        Подойдёт ссылка вида <code>steamcommunity.com/profiles/76561198…</code> или просто число.
+        Первая загрузка тянет историю с OpenDota, дальше обновляется быстро.
+      </p>
+    </section>
+
+    <div id="status" class="status" hidden></div>
+
+    <section id="dash" hidden>
+      <div id="profile-card" class="profile-card"></div>
+      <div id="summary" class="summary"></div>
+      <div id="insights" class="insights"></div>
+
+      <section id="hist" class="coach">
+        <div class="coach-head">
+          <span class="coach-icon">🧠</span>
+          <div class="coach-title">
+            <h2>AI-тренер по истории</h2>
+            <p class="coach-sub">Локальная модель ищет закономерности во всей истории, а не в одном матче</p>
+          </div>
+        </div>
+        <div class="coach-controls">
+          <button id="hist-run" type="button">Разобрать историю</button>
+          <button id="hist-refresh" type="button" class="ghost" hidden>Пересчитать</button>
+        </div>
+        <div id="hist-note" class="coach-note" hidden></div>
+        <div id="hist-out" class="coach-out" hidden></div>
+      </section>
+
+      <div class="chart-card">
+        <h2>Последние матчи</h2>
+        <p class="chart-sub">Нажмите на матч, чтобы открыть его в анализаторе</p>
+        <div id="recent" class="recent-list"></div>
+      </div>
+
+      <div class="chart-card">
+        <h2>Винрейт по последним 20 матчам</h2>
+        <p class="chart-sub">Каждая точка — процент побед в предыдущих 20 играх</p>
+        <canvas id="chart-rolling" class="chart"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <h2>Винрейт по времени суток</h2>
+        <p class="chart-sub">Серые столбцы — меньше 3 игр, по ним статистики нет</p>
+        <canvas id="chart-hour" class="chart"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <h2>Герои</h2>
+        <p class="chart-sub">Только герои с 3+ играми</p>
+        <div id="heroes"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Данные предоставляет OpenDota API · История хранится локально в data/dota.db
+  </footer>
+
+  <script src="markdown.js"></script>
+  <script src="progress.js"></script>
+</body>
+</html>

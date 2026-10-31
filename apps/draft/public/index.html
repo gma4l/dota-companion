@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dota 2 Draft Assistant</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">◆</span>
+      <div>
+        <h1>Dota 2 Draft Assistant</h1>
+        <p class="subtitle">Контрпики · Синергии · Баны · Роли</p>
+      </div>
+    </div>
+    <div class="status-area">
+      <div class="status-badge" id="statusBadge"><span class="dot"></span><span id="statusText">Ожидание игры…</span></div>
+      <div class="phase" id="phaseText">—</div>
+    </div>
+    <div class="side-toggle">
+      <span class="side-label">Ты играешь за:</span>
+      <button class="side-btn radiant" id="btnRadiant">Radiant</button>
+      <button class="side-btn dire" id="btnDire">Dire</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Текущий драфт -->
+    <section class="draft-section">
+      <div class="team-card radiant" id="teamRadiant">
+        <div class="team-head"><span class="team-name">Radiant</span><span class="team-tag" id="radiantTag">союзники</span></div>
+        <div class="picks-row" id="radiantPicks"></div>
+        <div class="bans-row" id="radiantBans"></div>
+      </div>
+      <div class="versus">VS</div>
+      <div class="team-card dire" id="teamDire">
+        <div class="team-head"><span class="team-name">Dire</span><span class="team-tag" id="direTag">враги</span></div>
+        <div class="picks-row" id="direPicks"></div>
+        <div class="bans-row" id="direBans"></div>
+      </div>
+    </section>
+
+    <!-- Анализ: баны / угрозы / состав -->
+    <section class="analysis-section" id="analysisSection">
+      <div class="analysis-col" id="bansCol">
+        <h3 class="col-title">🔒 Кого забанить</h3>
+        <div class="analysis-list" id="bansList"></div>
+      </div>
+      <div class="analysis-col" id="threatsCol">
+        <h3 class="col-title">⚠ Угрозы твоей команде</h3>
+        <div class="analysis-list" id="threatsList"></div>
+      </div>
+      <div class="analysis-col" id="compCol">
+        <h3 class="col-title">🧩 Анализ состава</h3>
+        <div class="comp-attrs" id="compAttrs"></div>
+        <div class="analysis-list" id="compNotes"></div>
+      </div>
+    </section>
+
+    <!-- Рекомендации -->
+    <section class="recs-section">
+      <h2 class="section-title">Лучшие герои по позициям</h2>
+      <div class="recs-grid" id="recsGrid"></div>
+    </section>
+  </main>
+
+  <!-- Ручной выбор героев (для пабликов / без GSI) -->
+  <section class="picker-panel">
+    <div class="picker-head">
+      <button class="picker-toggle" id="pickerToggle">🖱 Выбор героев вручную <span class="picker-hint">(All Pick / паблики)</span></button>
+      <div class="picker-targets" id="pickerTargets">
+        <button class="target-btn active" data-target="direPicks">Враг · пик</button>
+        <button class="target-btn" data-target="radiantPicks">Союзник · пик</button>
+        <button class="target-btn" data-target="direBans">Враг · бан</button>
+        <button class="target-btn" data-target="radiantBans">Союзник · бан</button>
+      </div>
+    </div>
+    <div class="picker-body" id="pickerBody">
+      <div class="picker-filters">
+        <input type="text" id="pickerSearch" class="picker-search" placeholder="Поиск героя (например: axe, анти-маг)…" autocomplete="off">
+        <div class="attr-filter" id="attrFilter">
+          <button class="attr-btn active" data-attr="">Все</button>
+          <button class="attr-btn" data-attr="str">Сила</button>
+          <button class="attr-btn" data-attr="agi">Ловкость</button>
+          <button class="attr-btn" data-attr="int">Интеллект</button>
+        </div>
+      </div>
+      <div class="hero-grid" id="heroGrid"></div>
+      <div class="picker-current" id="pickerCurrent"></div>
+      <div class="picker-actions">
+        <button class="picker-btn" id="pickerClear">Очистить всё</button>
+        <span class="picker-note">Клик по герою добавляет его в выбранную категорию. Клик по чипу ниже — убирает.</span>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    Капитанский режим подхватывается автоматически (GSI). Для All Pick вводи героев вручную — по мере того как видишь пики.
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

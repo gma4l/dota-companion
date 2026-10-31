@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dota 2 — Анализатор ошибок</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="logo">
+      <span class="logo-icon">🎯</span>
+      <div>
+        <h1>Dota 2 Анализатор</h1>
+        <p class="subtitle">Находит ошибки в матче по данным OpenDota</p>
+      </div>
+      <a class="nav-link" href="progress.html">Трекер прогресса →</a>
+      <button id="theme-toggle" class="ghost" title="Светлая / тёмная тема" aria-label="Переключить тему">🌙</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="search-card">
+      <label for="match-id">ID матча</label>
+      <div class="search-row">
+        <input
+          id="match-id"
+          type="text"
+          placeholder="ID матча или ссылка на него"
+          autocomplete="off"
+        />
+        <button id="analyze-btn" type="button">Анализировать</button>
+      </div>
+      <p class="hint">
+        Подойдёт любой публичный матч. Можно вставить ID или ссылку с
+        <a href="https://www.opendota.com" target="_blank" rel="noopener">opendota.com</a>,
+        Dotabuff или Stratz.
+        <button id="sample-btn" type="button" class="link-btn">Попробовать пример</button>
+      </p>
+      <div id="recent-chips" class="chips" hidden></div>
+    </section>
+
+    <div id="status" class="status" hidden></div>
+
+    <section id="report" hidden>
+      <div id="parse-banner"></div>
+      <div id="match-summary" class="summary"></div>
+
+      <section id="coach" class="coach" hidden>
+        <div class="coach-head">
+          <span class="coach-icon">🧠</span>
+          <div class="coach-title">
+            <h2>AI-тренер</h2>
+            <p class="coach-sub">
+              Локальная модель <span id="coach-model">qwen3</span> · данные не покидают компьютер
+            </p>
+          </div>
+        </div>
+
+        <div class="coach-controls">
+          <select id="coach-player" aria-label="За кого играли"></select>
+          <button id="coach-run" type="button">Разобрать</button>
+          <button id="coach-stop" type="button" class="ghost" hidden>Стоп</button>
+          <button id="coach-refresh" type="button" class="ghost" title="Проверить подключение к Ollama">Проверить Ollama</button>
+          <button id="coach-copy" type="button" class="ghost" title="Скопировать текст разбора" hidden>Копировать</button>
+          <button id="coach-download" type="button" class="ghost" title="Скачать разбор файлом .md" hidden>Скачать .md</button>
+        </div>
+
+        <div id="coach-note" class="coach-note" hidden></div>
+        <div id="coach-out" class="coach-out" hidden></div>
+      </section>
+
+      <div id="team-errors" class="team-errors"></div>
+      <div id="team-filter" class="chips" hidden>
+        <button type="button" class="chip active" data-side="all">Все игроки</button>
+        <button type="button" class="chip" data-side="radiant">Radiant</button>
+        <button type="button" class="chip" data-side="dire">Dire</button>
+      </div>
+      <div id="players"></div>
+    </section>
+  </main>
+
+  <footer>
+    Данные предоставляет OpenDota API · Анализ носит рекомендательный характер
+  </footer>
+
+  <script src="markdown.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

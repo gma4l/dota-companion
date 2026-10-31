@@ -1,0 +1,17 @@
+# зависимости
+node_modules/
+
+# данные и логи (создаются во время работы)
+data/
+*.log
+_srv.err
+
+# окружение
+.env
+.env.*
+!.env.example
+
+# служебное
+Thumbs.db
+desktop.ini
+.DS_Store
