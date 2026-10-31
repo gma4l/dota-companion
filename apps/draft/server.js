@@ -131,6 +131,14 @@ function createHandler(options = {}) {
 
     if (req.method !== 'GET' && req.method !== 'HEAD') return false;
 
+    // /draft → /draft/, иначе относительные style.css и app.js
+    // разрешаются от корня и грузятся из чужой папки.
+    if (staticPrefix && p === staticPrefix) {
+      res.writeHead(301, { Location: staticPrefix + '/' });
+      res.end();
+      return true;
+    }
+
     // Статика: либо в корне, либо под staticPrefix.
     let staticPath = p;
     if (staticPrefix) {
