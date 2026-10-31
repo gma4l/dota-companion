@@ -11,6 +11,7 @@
     "start": "node local/server.js",
     "draft": "node apps/draft/server.js",
     "analyzer": "node apps/analyzer/server.js",
+    "web:dev": "node worker/dev.mjs",
     "test": "node core/draft.test.js && node apps/analyzer/tests.js"
   },
   "keywords": [

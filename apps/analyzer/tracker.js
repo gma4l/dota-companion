@@ -10,6 +10,7 @@
 
 const path = require("node:path");
 const fs = require("node:fs");
+const { fetchTls12 } = require("../../local/net");
 const { DatabaseSync } = require("node:sqlite");
 
 const ROOT = __dirname;
@@ -71,7 +72,7 @@ async function getJson(url, retries = 3) {
 
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
-      const res = await fetch(url, { headers: { Accept: "application/json" } });
+      const res = await fetchTls12(url, { headers: { Accept: "application/json" } });
 
       if (res.status === 429) {
         lastErr = new Error("OpenDota: превышен лимит запросов. Подождите минуту и повторите.");
@@ -242,7 +243,7 @@ let HEROES = null;
 async function ensureHeroes() {
   if (HEROES) return HEROES;
   try {
-    const r = await fetch(`${OPENDOTA}/api/constants/heroes`, { signal: AbortSignal.timeout(10000) });
+    const r = await fetchTls12(`${OPENDOTA}/api/constants/heroes`, { signal: AbortSignal.timeout(10000) });
     if (r.ok) HEROES = await r.json();
   } catch {
     // без имён выводы будут с номерами героев

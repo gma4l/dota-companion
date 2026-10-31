@@ -1,0 +1,12 @@
+# Публичная версия: статика из web/ + API из worker/index.mjs.
+# Деплой:  npx wrangler deploy
+
+name = "dota-companion"
+main = "worker/index.mjs"
+compatibility_date = "2026-01-01"
+
+# Статические файлы сайта. Запросы к /api/* уходят в worker,
+# остальное раздаётся как есть.
+[assets]
+directory = "./web"
+binding = "ASSETS"

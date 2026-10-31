@@ -7,12 +7,7 @@
  * здесь нет HTTP, только данные и чистые функции.
  */
 
-const fs = require('node:fs');
-const path = require('node:path');
-
-const HEROES = JSON.parse(
-  fs.readFileSync(path.join(__dirname, 'heroes.json'), 'utf8')
-).heroes;
+const HEROES = require('./heroes.json').heroes;
 
 // Имена героев в GSI/API не всегда совпадают с ключами базы.
 const CLASS_ALIASES = {

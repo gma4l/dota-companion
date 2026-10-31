@@ -23,6 +23,7 @@ const fs = require("node:fs");
 const fsp = require("node:fs/promises");
 const path = require("node:path");
 const { spawn } = require("node:child_process");
+const { fetchTls12 } = require("../../local/net");
 
 const ROOT = __dirname;
 const PORT = Number(process.env.PORT || 8080);
@@ -826,7 +827,7 @@ async function handleProfile(url, res) {
   LOG.info(`Профиль: запрос account_id=${id}`);
 
   try {
-    const r = await fetch(`https://api.opendota.com/api/players/${id}`, {
+    const r = await fetchTls12(`https://api.opendota.com/api/players/${id}`, {
       signal: AbortSignal.timeout(10000),
     });
     if (!r.ok) return sendJson(res, r.status, { error: `OpenDota ответила ${r.status}.` });
@@ -920,7 +921,7 @@ async function handleMatchProxy(url, res) {
   if (cached) return sendJson(res, 200, cached);
 
   try {
-    const r = await fetch(`${API_OPEN_DOTA}/api/matches/${id}`, { signal: AbortSignal.timeout(15000) });
+    const r = await fetchTls12(`${API_OPEN_DOTA}/api/matches/${id}`, { signal: AbortSignal.timeout(15000) });
     if (!r.ok) {
       if (r.status === 429) return sendJson(res, 429, { error: "Слишком много запросов к OpenDota. Подождите минуту." });
       return sendJson(res, r.status, { error: `OpenDota ответила ${r.status}.` });
