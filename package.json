@@ -1,0 +1,23 @@
+{
+  "name": "dota-companion",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Помощник по драфту и аналитике матчей Dota 2 для обычного матчмейкинга",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "scripts": {
+    "start": "node local/server.js",
+    "draft": "node apps/draft/server.js",
+    "analyzer": "node apps/analyzer/server.js",
+    "test": "node core/draft.test.js && node apps/analyzer/tests.js"
+  },
+  "keywords": [
+    "dota2",
+    "all-pick",
+    "draft",
+    "opendota",
+    "ollama"
+  ]
+}

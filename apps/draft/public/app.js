@@ -27,6 +27,9 @@ let lastState = null;
 let manual = { radiantPicks: [], radiantBans: [], direPicks: [], direBans: [] };
 let activeTarget = 'direPicks';
 let attrFilter = '';
+// true, если игрок сам переключил категорию — тогда не перебиваем её стороной
+let targetTouched = false;
+let visibleHeroes = [];
 
 // ---------------------------------------------------------------------------
 async function loadHeroes() {
@@ -213,6 +216,7 @@ function renderStatus(state) {
 
   const parts = [];
   if (state.gameState && GAME_STATES[state.gameState]) parts.push(GAME_STATES[state.gameState]);
+  if (state.ownHero && HERO_MAP[state.ownHero]) parts.push('твой герой: ' + HERO_MAP[state.ownHero].name);
   if (state.pickPhase === true) parts.push('пик');
   else if (state.pickPhase === false) parts.push('бан');
   if (state.activeTeam === 2) parts.push('ход Radiant');
@@ -224,6 +228,17 @@ function renderSide(state) {
   const side = state.side || 'radiant';
   document.getElementById('btnRadiant').classList.toggle('active', side === 'radiant');
   document.getElementById('btnDire').classList.toggle('active', side === 'dire');
+  syncEnemyTarget(side);
+}
+
+// В All Pick чаще всего нужно отмечать врагов: по умолчанию выбираем
+// категорию противоположной стороны.
+function syncEnemyTarget(side) {
+  if (targetTouched) return;
+  activeTarget = side === 'dire' ? 'radiantPicks' : 'direPicks';
+  document.querySelectorAll('.target-btn').forEach((b) => {
+    b.classList.toggle('active', b.dataset.target === activeTarget);
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -264,6 +279,7 @@ document.querySelectorAll('.target-btn').forEach((btn) => {
     document.querySelectorAll('.target-btn').forEach((b) => b.classList.remove('active'));
     btn.classList.add('active');
     activeTarget = btn.dataset.target;
+    targetTouched = true;
   });
 });
 
@@ -280,6 +296,16 @@ document.querySelectorAll('.attr-btn').forEach((btn) => {
 const pickerSearch = document.getElementById('pickerSearch');
 pickerSearch.addEventListener('input', buildPicker);
 
+// Enter добавляет первого героя из найденных — быстрее, чем клик.
+pickerSearch.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  if (visibleHeroes.length) {
+    addManual(visibleHeroes[0]);
+    pickerSearch.select();
+  }
+});
+
 function buildPicker() {
   const grid = document.getElementById('heroGrid');
   grid.innerHTML = '';
@@ -294,6 +320,8 @@ function buildPicker() {
     })
     .sort((a, b) => HERO_MAP[a].name.localeCompare(HERO_MAP[b].name));
 
+  visibleHeroes = keys;
+
   for (const key of keys) {
     const h = HERO_MAP[key];
     const tile = el('div', 'hero-tile');
@@ -306,7 +334,10 @@ function buildPicker() {
 }
 
 function addManual(key) {
-  if (!manual[activeTarget].includes(key)) manual[activeTarget].push(key);
+  if (manual[activeTarget].includes(key)) return;
+  // В пиках не может быть больше пяти героев.
+  if (activeTarget.endsWith('Picks') && manual[activeTarget].length >= 5) return;
+  manual[activeTarget].push(key);
   renderPickerCurrent();
   applyManual();
 }
@@ -346,7 +377,11 @@ function renderPickerCurrent() {
 async function applyManual() {
   await fetch('/api/manual', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ side: lastState && lastState.side, ...manual }),
+    body: JSON.stringify({
+      side: lastState && lastState.side,
+      ownHero: lastState && lastState.ownHero,
+      ...manual,
+    }),
   });
   refresh();
 }

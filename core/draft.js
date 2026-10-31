@@ -115,14 +115,23 @@ function applyManual(state, body = {}) {
   resetDraft(state);
   state.side = body.side === 'dire' ? 'dire' : 'radiant';
   state.radiant = {
-    picks: normHeroList(body.radiantPicks),
-    bans: normHeroList(body.radiantBans),
+    picks: normHeroList(body.radiantPicks).slice(0, 5),
+    bans: normHeroList(body.radiantBans).slice(0, 7),
   };
   state.dire = {
-    picks: normHeroList(body.direPicks),
-    bans: normHeroList(body.direBans),
+    picks: normHeroList(body.direPicks).slice(0, 5),
+    bans: normHeroList(body.direBans).slice(0, 7),
   };
   state.ownHero = resolveClass(body.ownHero) || state.ownHero || null;
+
+  // В All Pick свой герой известен из GSI: держим его в составе,
+  // даже если ручной ввод его не прислал.
+  if (state.ownHero) {
+    const team = state.side === 'radiant' ? state.radiant : state.dire;
+    if (!team.picks.includes(state.ownHero)) team.picks.unshift(state.ownHero);
+    team.picks = team.picks.slice(0, 5);
+  }
+
   state.connected = false;
   state.lastUpdate = Date.now();
   return state;

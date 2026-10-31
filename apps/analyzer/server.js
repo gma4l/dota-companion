@@ -967,7 +967,7 @@ function checkRateLimit(key) {
 
 const PROTECTED_API = new Set(["/api/coach", "/api/coach-history", "/api/health", "/api/profile", "/api/stats", "/api/sync", "/api/match"]);
 
-const server = http.createServer(async (req, res) => {
+async function handle(req, res) {
   try {
     const url = new URL(req.url, "http://localhost");
 
@@ -996,36 +996,49 @@ const server = http.createServer(async (req, res) => {
   } catch (e) {
     sendJson(res, 500, { error: e.message });
   }
-});
-
-server.on("error", (e) => {
-  if (e.code === "EADDRINUSE") {
-    console.error(`\n  Порт ${PORT} занят. Задайте другой:  set PORT=8081 && node server.js\n`);
-    process.exit(1);
-  }
-  throw e;
-});
-
-server.listen(PORT, () => {
-  const url = `http://localhost:${PORT}`;
-  console.log(`\n  Dota 2 Анализатор запущен:  ${url}`);
-  console.log(`  AI-тренер: ${COACH_MODEL} @ ${OLLAMA_URL}`);
-  console.log(`  Остановить: Ctrl+C\n`);
-
-  if (process.env.OPEN_BROWSER !== "0") {
-    spawn("cmd", ["/c", "start", "", url], { detached: true, stdio: "ignore" }).unref();
-  }
-});
-
-// ────────────────────────── Graceful shutdown ──────────────────────────
-
-function shutdown(signal) {
-  LOG.info(`Получен сигнал ${signal}, завершение работы…`);
-  try {
-    tracker.close();
-  } catch {}
-  process.exit(0);
 }
 
-process.on("SIGINT", () => shutdown("SIGINT"));
-process.on("SIGTERM", () => shutdown("SIGTERM"));
+function createServer() {
+  const server = http.createServer(handle);
+
+  server.on("error", (e) => {
+    if (e.code === "EADDRINUSE") {
+      console.error(`\n  Порт ${PORT} занят. Задайте другой:  set PORT=8081 && node server.js\n`);
+      process.exit(1);
+    }
+    throw e;
+  });
+
+  return server;
+}
+
+// ────────────────────────── Запуск ──────────────────────────
+
+if (require.main === module) {
+  const server = createServer();
+
+  server.listen(PORT, () => {
+    const url = `http://localhost:${PORT}`;
+    console.log(`\n  Dota 2 Анализатор запущен:  ${url}`);
+    console.log(`  AI-тренер: ${COACH_MODEL} @ ${OLLAMA_URL}`);
+    console.log(`  Остановить: Ctrl+C\n`);
+
+    if (process.env.OPEN_BROWSER !== "0") {
+      spawn("cmd", ["/c", "start", "", url], { detached: true, stdio: "ignore" }).unref();
+    }
+  });
+
+  const shutdown = (signal) => {
+    LOG.info(`Получен сигнал ${signal}, завершение работы…`);
+    try {
+      tracker.close();
+    } catch {}
+    process.exit(0);
+  };
+
+  process.on("SIGINT", () => shutdown("SIGINT"));
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+}
+
+module.exports = { handle, createServer };
+

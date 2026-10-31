@@ -121,6 +121,22 @@ test('manual убирает дубли и мусор', () => {
   assert.deepEqual(s.radiant.picks, ['axe']);
 });
 
+test('manual сохраняет своего героя из GSI', () => {
+  const s = core.createState();
+  core.applyGsi(s, { player: { team_name: 'dire' }, hero: { name: 'juggernaut' } });
+  core.applyManual(s, { side: 'dire', ownHero: 'juggernaut', radiantPicks: ['axe'] });
+  assert.deepEqual(s.dire.picks, ['juggernaut']);
+});
+
+test('в пиках не больше пяти героев', () => {
+  const s = core.createState();
+  core.applyManual(s, {
+    side: 'radiant',
+    radiantPicks: ['axe', 'lina', 'pudge', 'zuus', 'nevermore', 'slark', 'riki'],
+  });
+  assert.equal(s.radiant.picks.length, 5);
+});
+
 test('неизвестная сторона приводится к radiant', () => {
   const s = core.createState();
   core.applyManual(s, { side: 'middle' });

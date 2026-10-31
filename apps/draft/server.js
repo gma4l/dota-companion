@@ -1,10 +1,11 @@
 'use strict';
 
 /*
- * Dota 2 Draft Assistant — локальный сервер.
+ * Dota 2 Draft Assistant — веб-слой.
  *
- * Тонкий HTTP-слой: раздаёт интерфейс, принимает GSI от Dota 2
- * и отдаёт состояние драфта. Вся логика — в core/draft.js.
+ * Тонкий HTTP-обработчик: GSI, состояние драфта, статика.
+ * Вся логика — в core/draft.js, поэтому тот же код использует
+ * и объединённый сервер (local/server.js), и публичная версия.
  */
 
 const http = require('node:http');
@@ -14,8 +15,6 @@ const path = require('node:path');
 const core = require('../../core/draft');
 const { heroList } = require('../../core/heroes');
 
-const PORT = Number(process.env.PORT || 3210);
-const HOST = process.env.HOST || '127.0.0.1';
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
 const MIME = {
@@ -28,8 +27,6 @@ const MIME = {
   '.jpg': 'image/jpeg',
   '.ico': 'image/x-icon',
 };
-
-const state = core.createState();
 
 function sendJson(res, code, obj) {
   const body = JSON.stringify(obj);
@@ -55,7 +52,9 @@ function serveStatic(res, urlPath) {
       res.end('Not found');
       return;
     }
-    res.writeHead(200, { 'Content-Type': MIME[path.extname(filePath).toLowerCase()] || 'application/octet-stream' });
+    res.writeHead(200, {
+      'Content-Type': MIME[path.extname(filePath).toLowerCase()] || 'application/octet-stream',
+    });
     res.end(data);
   });
 }
@@ -78,60 +77,94 @@ function readBody(req) {
   });
 }
 
-async function route(req, res, url) {
-  if (req.method === 'POST' && (url.pathname === '/dota2-gsi' || url.pathname === '/gsi')) {
-    core.applyGsi(state, await readBody(req));
-    sendJson(res, 200, { ok: true });
-    return;
+/**
+ * Создаёт независимый обработчик со своим состоянием драфта.
+ *
+ * @param {object} [options]
+ * @param {string} [options.staticPrefix] — префикс, под которым раздаётся UI
+ *        (например, '/draft'); пустой — корень.
+ * @returns {{ handle: Function, state: object }}
+ */
+function createHandler(options = {}) {
+  const state = core.createState();
+  const staticPrefix = (options.staticPrefix || '').replace(/\/+$/, '');
+
+  async function handle(req, res, url) {
+    url = url || new URL(req.url, 'http://localhost');
+    const p = url.pathname;
+
+    if (req.method === 'POST' && (p === '/dota2-gsi' || p === '/gsi')) {
+      core.applyGsi(state, await readBody(req));
+      sendJson(res, 200, { ok: true });
+      return true;
+    }
+
+    if (req.method === 'GET' && p === '/api/state') {
+      sendJson(res, 200, core.snapshot(state));
+      return true;
+    }
+
+    if (req.method === 'GET' && p === '/api/heroes') {
+      sendJson(res, 200, { heroes: heroList() });
+      return true;
+    }
+
+    // Ручной ввод: демо-режим и паблики (All Pick).
+    if (req.method === 'POST' && p === '/api/manual') {
+      core.applyManual(state, await readBody(req));
+      sendJson(res, 200, { ok: true, recs: core.computeRecommendations(state) });
+      return true;
+    }
+
+    if (req.method === 'POST' && p === '/api/reset') {
+      core.resetDraft(state);
+      sendJson(res, 200, { ok: true });
+      return true;
+    }
+
+    if (req.method === 'POST' && p === '/api/side') {
+      const body = await readBody(req);
+      if (body.side === 'radiant' || body.side === 'dire') state.side = body.side;
+      sendJson(res, 200, { ok: true, side: state.side });
+      return true;
+    }
+
+    if (req.method !== 'GET' && req.method !== 'HEAD') return false;
+
+    // Статика: либо в корне, либо под staticPrefix.
+    let staticPath = p;
+    if (staticPrefix) {
+      if (staticPath !== staticPrefix && !staticPath.startsWith(staticPrefix + '/')) return false;
+      staticPath = staticPath.slice(staticPrefix.length) || '/';
+    }
+    serveStatic(res, staticPath);
+    return true;
   }
 
-  if (req.method === 'GET' && url.pathname === '/api/state') {
-    sendJson(res, 200, core.snapshot(state));
-    return;
-  }
-
-  if (req.method === 'GET' && url.pathname === '/api/heroes') {
-    sendJson(res, 200, { heroes: heroList() });
-    return;
-  }
-
-  // Ручной ввод: демо-режим и паблики (All Pick).
-  if (req.method === 'POST' && url.pathname === '/api/manual') {
-    core.applyManual(state, await readBody(req));
-    sendJson(res, 200, { ok: true, recs: core.computeRecommendations(state) });
-    return;
-  }
-
-  if (req.method === 'POST' && url.pathname === '/api/reset') {
-    core.resetDraft(state);
-    sendJson(res, 200, { ok: true });
-    return;
-  }
-
-  if (req.method === 'POST' && url.pathname === '/api/side') {
-    const body = await readBody(req);
-    if (body.side === 'radiant' || body.side === 'dire') state.side = body.side;
-    sendJson(res, 200, { ok: true, side: state.side });
-    return;
-  }
-
-  serveStatic(res, url.pathname);
+  return { handle, state };
 }
 
-const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-  try {
-    await route(req, res, url);
-  } catch (err) {
-    sendJson(res, 500, { error: String((err && err.message) || err) });
-  }
-});
+function createServer(options = {}) {
+  const { handle } = createHandler(options);
+  return http.createServer((req, res) => {
+    handle(req, res).catch((err) => sendJson(res, 500, { error: String((err && err.message) || err) }));
+  });
+}
 
-server.listen(PORT, HOST, () => {
-  console.log('==============================================================');
-  console.log('  Dota 2 Draft Assistant');
-  console.log(`  Веб-интерфейс:  http://${HOST}:${PORT}`);
-  console.log(`  GSI endpoint:   http://${HOST}:${PORT}/dota2-gsi`);
-  console.log('  Для теста без игры используй демо-режим в интерфейсе.');
-  console.log('==============================================================');
-});
+module.exports = { createHandler, createServer };
+
+// ────────────────────────── Самостоятельный запуск ──────────────────────────
+
+if (require.main === module) {
+  const PORT = Number(process.env.PORT || 3210);
+  const HOST = process.env.HOST || '127.0.0.1';
+
+  createServer().listen(PORT, HOST, () => {
+    console.log('==============================================================');
+    console.log('  Dota 2 Draft Assistant');
+    console.log(`  Веб-интерфейс:  http://${HOST}:${PORT}`);
+    console.log(`  GSI endpoint:   http://${HOST}:${PORT}/dota2-gsi`);
+    console.log('  Для теста без игры используй демо-режим в интерфейсе.');
+    console.log('==============================================================');
+  });
+}

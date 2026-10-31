@@ -23,6 +23,7 @@
       <span class="side-label">Ты играешь за:</span>
       <button class="side-btn radiant" id="btnRadiant">Radiant</button>
       <button class="side-btn dire" id="btnDire">Dire</button>
+      <a class="nav-link" href="/">← Разбор матчей</a>
     </div>
   </header>
 
@@ -69,7 +70,7 @@
   <!-- Ручной выбор героев (для пабликов / без GSI) -->
   <section class="picker-panel">
     <div class="picker-head">
-      <button class="picker-toggle" id="pickerToggle">🖱 Выбор героев вручную <span class="picker-hint">(All Pick / паблики)</span></button>
+      <button class="picker-toggle" id="pickerToggle">🖱 Выбор героев вручную <span class="picker-hint">(All Pick — отметь врагов)</span></button>
       <div class="picker-targets" id="pickerTargets">
         <button class="target-btn active" data-target="direPicks">Враг · пик</button>
         <button class="target-btn" data-target="radiantPicks">Союзник · пик</button>
@@ -97,7 +98,8 @@
   </section>
 
   <footer class="footer">
-    Капитанский режим подхватывается автоматически (GSI). Для All Pick вводи героев вручную — по мере того как видишь пики.
+    По умолчанию — обычный матчмейкинг (All Pick): своего героя подхватывает GSI,
+    врагов отметь в сетке ниже. Капитанский режим определяется автоматически.
   </footer>
 
   <script src="app.js"></script>
