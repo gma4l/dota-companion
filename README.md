@@ -55,6 +55,8 @@ copy apps\draft\gamestate_integration_draftassist.cfg "D:\SteamLibrary\steamapps
 
 ## Публичная версия
 
+**Живой сайт:** https://gma4l.github.io/dota-companion/
+
 Два варианта, оба бесплатные.
 
 ### GitHub Pages (рекомендуется для РФ)
