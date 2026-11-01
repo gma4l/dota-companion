@@ -2,8 +2,25 @@
 
 import { matchFindings, heroName, heroSlug, formatDuration } from './findings.js';
 
+const CORE = window.DotaCore;
 const IMG = (slug) => `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/${slug}.png`;
 const $ = (id) => document.getElementById(id);
+
+// Где брать данные: свой Worker (если он есть) или OpenDota напрямую.
+// На GitHub Pages Worker-а нет — тогда идём в OpenDota, он отдаёт CORS.
+let API_BASE = '/api';
+let API_DIRECT = false;
+
+async function resolveApi() {
+  try {
+    const res = await fetch('/api/health', { signal: AbortSignal.timeout(1500) });
+    if (res.ok) return;
+  } catch {
+    // статический хостинг — это нормально
+  }
+  API_BASE = 'https://api.opendota.com/api';
+  API_DIRECT = true;
+}
 
 let HEROES = {};
 let heroById = null;
@@ -204,15 +221,12 @@ function schedule() {
   timer = setTimeout(recompute, 150);
 }
 
-async function recompute() {
+// Расчёт целиком в браузере: один и тот же код, что и на сервере.
+function recompute() {
   try {
-    const res = await fetch('/api/draft', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(draft),
-    });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const snap = await res.json();
+    const state = CORE.createState();
+    CORE.applyManual(state, draft);
+    const snap = CORE.snapshot(state);
     renderRecs(snap.recs);
     renderAnalysis(snap.recs);
   } catch (err) {
@@ -311,7 +325,7 @@ function parseMatchId(raw) {
 
 async function loadHeroConstants() {
   if (heroById) return heroById;
-  const res = await fetch('/api/constants/heroes');
+  const res = await fetch(`${API_BASE}/constants/heroes`);
   if (!res.ok) throw new Error('Не удалось загрузить список героев.');
   heroById = await res.json();
   return heroById;
@@ -329,7 +343,11 @@ async function loadMatch() {
   out.appendChild(el('p', 'muted', 'Загружаю матч…'));
 
   try {
-    const [, constants, res] = await Promise.all([null, loadHeroConstants(), fetch('/api/match/' + id)]);
+    const [, constants, res] = await Promise.all([
+      null,
+      loadHeroConstants(),
+      fetch(API_DIRECT ? `${API_BASE}/matches/${id}` : `${API_BASE}/match/${id}`),
+    ]);
     if (!res.ok) {
       out.innerHTML = '';
       out.appendChild(el('p', 'error', res.status === 404
@@ -414,12 +432,19 @@ function statBlock(label, value) {
 
 (async function init() {
   try {
-    const res = await fetch('/api/heroes');
-    const data = await res.json();
-    for (const h of data.heroes) HEROES[h.key] = h;
+    await resolveApi();
+    for (const h of CORE.heroList()) HEROES[h.key] = h;
     renderGrid();
     renderPicked();
     recompute();
+
+    // Ссылка вида /#match=4156228387 сразу открывает разбор.
+    const link = location.hash.match(/match=(\d{6,})/);
+    if (link) {
+      document.querySelector('.tab[data-view="match"]').click();
+      $('matchId').value = link[1];
+      loadMatch();
+    }
   } catch (err) {
     $('recs').appendChild(el('p', 'error', 'Не удалось загрузить героев: ' + err.message));
   }
