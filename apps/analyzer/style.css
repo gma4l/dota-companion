@@ -632,3 +632,41 @@ body[data-theme="light"] .summary-card .value.dire { text-shadow: none; }
   .player-head .badges { justify-content: flex-start; }
   .recent-gpm, .recent-dur { display: none; }
 }
+
+/* ── Уведомление о завершённом матче ── */
+.postgame-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(var(--accent-rgb), 0.45);
+  background: linear-gradient(90deg, var(--accent-soft), rgba(var(--accent-rgb), 0.03));
+  box-shadow: var(--shadow-xs);
+}
+.postgame-banner[hidden] { display: none; }
+.postgame-text { flex: 1; min-width: 220px; font-size: 14px; color: var(--text); }
+.postgame-action {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 9px 16px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--accent);
+  color: #071018;
+  transition: background 0.15s var(--ease);
+}
+.postgame-action:hover { background: var(--accent-hover); }
+.postgame-close {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 15px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+.postgame-close:hover { color: var(--text); }

@@ -98,6 +98,37 @@ test('без GSI-героя состояние не ломается', () => {
   assert.deepEqual(s.radiant.picks, []);
 });
 
+test('новый матч очищает прошлый драфт', () => {
+  const s = core.createState();
+  core.applyGsi(s, {
+    map: { matchid: '1001', game_state: 'DOTA_GAMERULES_STATE_POST_GAME' },
+    player: { team_name: 'dire' },
+    hero: { name: 'juggernaut' },
+  });
+  assert.equal(s.matchId, 1001);
+
+  core.applyManual(s, { side: 'dire', radiantPicks: ['axe'], direPicks: ['juggernaut'] });
+  assert.deepEqual(s.radiant.picks, ['axe']);
+
+  core.applyGsi(s, {
+    map: { matchid: '1002', game_state: 'DOTA_GAMERULES_STATE_HERO_SELECTION' },
+    player: { team_name: 'radiant' },
+  });
+  assert.equal(s.matchId, 1002);
+  assert.deepEqual(s.radiant.picks, []);
+  assert.deepEqual(s.dire.picks, []);
+  assert.equal(s.ownHero, null);
+});
+
+test('тот же матч не сбрасывает введённых героев', () => {
+  const s = core.createState();
+  core.applyGsi(s, { map: { matchid: '2001' } });
+  core.applyManual(s, { side: 'radiant', radiantPicks: ['axe'], direPicks: ['pudge'] });
+  core.applyGsi(s, { map: { matchid: '2001' } });
+  assert.deepEqual(s.radiant.picks, ['axe']);
+  assert.deepEqual(s.dire.picks, ['pudge']);
+});
+
 console.log('\nРучной ввод:');
 
 test('manual задаёт стороны и героев', () => {
@@ -207,7 +238,7 @@ console.log('\nСнимок состояния:');
 test('snapshot содержит всё, что ждёт интерфейс', () => {
   const s = core.createState();
   const snap = core.snapshot(s);
-  for (const key of ['connected', 'gameState', 'side', 'ownHero', 'pickPhase', 'activeTeam', 'lastUpdate', 'radiant', 'dire', 'recs']) {
+  for (const key of ['connected', 'gameState', 'matchId', 'side', 'ownHero', 'pickPhase', 'activeTeam', 'lastUpdate', 'radiant', 'dire', 'recs']) {
     assert.ok(key in snap, 'нет поля ' + key);
   }
 });

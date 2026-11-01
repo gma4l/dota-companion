@@ -94,7 +94,16 @@ function createHandler(options = {}) {
     const p = url.pathname;
 
     if (req.method === 'POST' && (p === '/dota2-gsi' || p === '/gsi')) {
-      core.applyGsi(state, await readBody(req));
+      const payload = await readBody(req);
+      core.applyGsi(state, payload);
+      // Даём объединённому серверу шанс отреагировать на конец матча.
+      if (typeof options.onGsi === 'function') {
+        try {
+          options.onGsi(payload);
+        } catch {
+          // сбой наблюдателя не должен ломать приём GSI
+        }
+      }
       sendJson(res, 200, { ok: true });
       return true;
     }

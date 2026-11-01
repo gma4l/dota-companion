@@ -721,6 +721,106 @@ async function runAnalysis() {
   }
 }
 
+// ─────────────────── Автоматический разбор после матча ───────────────────
+
+const POSTGAME_POLL_MS = 10000;
+let postgameTimer = null;
+let postgameFailures = 0;
+let postgameAutoRan = null;
+
+function initPostgameWatch() {
+  const banner = document.getElementById("postgame-banner");
+  if (!banner) return;
+
+  const poll = async () => {
+    try {
+      const res = await fetch("/api/postgame", { headers: { Accept: "application/json" } });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      postgameFailures = 0;
+      renderPostgameBanner(await res.json());
+    } catch {
+      // Старая или публичная сборка без наблюдателя — тихо выключаем опрос.
+      postgameFailures += 1;
+      if (postgameFailures >= 2) {
+        clearInterval(postgameTimer);
+        postgameTimer = null;
+        banner.hidden = true;
+      }
+    }
+  };
+
+  poll();
+  postgameTimer = setInterval(poll, POSTGAME_POLL_MS);
+}
+
+function renderPostgameBanner(state) {
+  const banner = document.getElementById("postgame-banner");
+  const id = state && state.matchId;
+  if (!banner || !id || !state.status || state.status === "idle") {
+    if (banner) banner.hidden = true;
+    return;
+  }
+
+  // Этот матч уже разобран — баннер не нужен.
+  if (currentReport && String(currentReport.matchId) === String(id)) {
+    banner.hidden = true;
+    return;
+  }
+
+  banner.hidden = false;
+  banner.innerHTML = "";
+
+  let text;
+  if (state.status === "ready") {
+    text = `Матч #${id} готов к разбору.`;
+  } else if (state.status === "error") {
+    text = `Матч #${id} завершён, но OpenDota так и не отдала данные.`;
+  } else {
+    text = `Матч #${id} завершён. Ждём данные OpenDota… (${state.attempts} из ${state.maxAttempts})`;
+  }
+
+  const label = document.createElement("span");
+  label.className = "postgame-text";
+  label.textContent = text;
+  banner.appendChild(label);
+
+  const analyze = document.createElement("button");
+  analyze.type = "button";
+  analyze.className = "postgame-action";
+  analyze.textContent = state.status === "waiting" ? "Разобрать сейчас" : "Разобрать матч";
+  analyze.addEventListener("click", () => {
+    document.getElementById("match-id").value = String(id);
+    banner.hidden = true;
+    runAnalysis();
+  });
+  banner.appendChild(analyze);
+
+  const close = document.createElement("button");
+  close.type = "button";
+  close.className = "postgame-close";
+  close.title = "Скрыть";
+  close.textContent = "✕";
+  close.addEventListener("click", async () => {
+    banner.hidden = true;
+    try {
+      await fetch("/api/postgame/dismiss", { method: "POST" });
+    } catch {
+      // не критично
+    }
+  });
+  banner.appendChild(close);
+
+  // Готовый матч открываем сами — один раз на матч и только если
+  // пользователь не запустил другой разбор.
+  const btn = document.getElementById("analyze-btn");
+  if (state.status === "ready" && !btn.disabled && postgameAutoRan !== String(id)) {
+    postgameAutoRan = String(id);
+    document.getElementById("match-id").value = String(id);
+    banner.hidden = true;
+    runAnalysis();
+  }
+}
+
 function init() {
   document.getElementById("analyze-btn").addEventListener("click", runAnalysis);
   document.getElementById("match-id").addEventListener("keydown", (e) => {
@@ -734,6 +834,7 @@ function init() {
   initCoachControls();
   initTheme();
   renderRecentChips();
+  initPostgameWatch();
 
   // Переход из трекера: index.html?match=123456
   const preset = new URLSearchParams(location.search).get("match");

@@ -16,6 +16,7 @@ function createState(overrides = {}) {
   return {
     connected: false,
     gameState: null,
+    matchId: null,
     side: null, // 'radiant' | 'dire' | null
     radiant: { picks: [], bans: [] },
     dire: { picks: [], bans: [] },
@@ -52,6 +53,16 @@ function normHeroList(list) {
  */
 function applyGsi(state, payload) {
   if (!payload) return state;
+
+  // Новый матч — старые пики и баны больше не актуальны.
+  const matchId = Number((payload.map && payload.map.matchid) || 0);
+  if (matchId > 0) {
+    if (state.matchId && state.matchId !== matchId) {
+      resetDraft(state);
+      state.ownHero = null;
+    }
+    state.matchId = matchId;
+  }
 
   const draft = payload.draft;
   if (draft) {
@@ -275,6 +286,7 @@ function snapshot(state) {
   return {
     connected: state.connected,
     gameState: state.gameState,
+    matchId: state.matchId || null,
     side: state.side,
     ownHero: state.ownHero || null,
     pickPhase: state.pickPhase,
