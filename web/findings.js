@@ -62,7 +62,10 @@ function playerFindings(p, minutes) {
   if ((p.gold_per_min || 0) > 0 && p.gold_per_min < 300) out.push(`низкий GPM (${p.gold_per_min})`);
   if ((p.xp_per_min || 0) > 0 && p.xp_per_min < 400) out.push(`низкий XPM (${p.xp_per_min})`);
   if ((p.hero_damage || 0) > 0 && p.hero_damage < 8000) out.push(`мало урона по героям (${Math.round(p.hero_damage / 1000)}k)`);
-  if ((p.last_hits || 0) > 0 && lhPerMin < 3) out.push(`мало добиваний (${lhPerMin.toFixed(1)}/мин)`);
+  // Низкие добивания — проблема только для кора: у саппорта это норма.
+  if ((p.gold_per_min || 0) >= 400 && (p.last_hits || 0) > 0 && lhPerMin < 3) {
+    out.push(`мало добиваний для кора (${lhPerMin.toFixed(1)}/мин)`);
+  }
 
   return out.slice(0, 3);
 }

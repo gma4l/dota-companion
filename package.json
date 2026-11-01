@@ -12,6 +12,7 @@
     "draft": "node apps/draft/server.js",
     "analyzer": "node apps/analyzer/server.js",
     "web:dev": "node worker/dev.mjs",
+    "build:web": "esbuild core/browser.js --bundle --format=iife --global-name=DotaCore --outfile=web/vendor/dota-core.js --minify",
     "test": "node core/draft.test.js && node apps/analyzer/tests.js"
   },
   "keywords": [
@@ -20,5 +21,8 @@
     "draft",
     "opendota",
     "ollama"
-  ]
+  ],
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
 }

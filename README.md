@@ -55,13 +55,26 @@ copy apps\draft\gamestate_integration_draftassist.cfg "D:\SteamLibrary\steamapps
 
 ## Публичная версия
 
+Два варианта, оба бесплатные.
+
+### GitHub Pages (рекомендуется для РФ)
+
+Сайт полностью статический: драфт считается в браузере (`web/vendor/dota-core.js`),
+матч запрашивается у OpenDota напрямую (он отдаёт CORS). Сервер не нужен,
+Cloudflare не нужен — работает там, где открывается `github.io`.
+
 ```bat
-npm run web:dev
+npm run build:web
+scripts\deploy-pages.cmd
 ```
 
-Откроется `http://127.0.0.1:8787` — тот же сайт, что будет в интернете.
+Затем: Settings → Pages → Deploy from a branch → `gh-pages` / `root`.
+Через минуту сайт будет на `https://<логин>.github.io/<репозиторий>/`.
 
-Деплой (нужен бесплатный аккаунт Cloudflare):
+### Cloudflare Worker (опционально)
+
+Даёт кэш запросов к OpenDota и аккуратный `/api/*`. Требует аккаунт Cloudflare;
+в РФ домены `*.workers.dev` иногда недоступны без VPN.
 
 ```bat
 npx wrangler login
@@ -69,6 +82,15 @@ npx wrangler deploy
 ```
 
 `wrangler.toml` уже настроен: статика из `web/`, API из `worker/index.mjs`.
+Фронтенд сам определяет, есть ли Worker: пробует `/api/health`, иначе идёт
+в OpenDota напрямую. Один и тот же код работает в обоих режимах.
+
+### Локальная проверка статики
+
+```bat
+python -m http.server 8000 --directory web
+```
+
 
 ## Тесты
 
