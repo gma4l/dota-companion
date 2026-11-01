@@ -1,22 +1,31 @@
 @echo off
-rem Публикация статической версии на GitHub Pages (ветка gh-pages).
-rem Запускать из корня репозитория:  scripts\deploy-pages.cmd
-
+setlocal
 cd /d "%~dp0.."
 
-echo [1/2] Сборка web\vendor\dota-core.js
-call node_modules\.bin\esbuild.cmd core\browser.js --bundle --format=iife --global-name=DotaCore --outfile=web\vendor\dota-core.js --minify
+set "GIT=git"
+where git >nul 2>nul || set "GIT=C:\Program Files\Git\cmd\git.exe"
+
+echo [1/3] Building web\vendor\dota-core.js
+call "node_modules\.bin\esbuild.cmd" core\browser.js --bundle --format=iife --global-name=DotaCore --outfile=web\vendor\dota-core.js --minify
 if errorlevel 1 exit /b 1
 
-echo [2/2] Отправка web\ в ветку gh-pages
-git subtree push --prefix web origin gh-pages
+echo [2/3] Checking remote origin
+"%GIT%" remote get-url origin >nul 2>nul
+if errorlevel 1 (
+  echo No remote "origin". Add it first:
+  echo   git remote add origin https://github.com/USER/REPO.git
+  exit /b 1
+)
+
+echo [3/3] Publishing web\ to branch gh-pages
+"%GIT%" subtree push --prefix web origin gh-pages
 if errorlevel 1 (
   echo.
-  echo Если ветка уже существует и разошлась — перезапиши её:
+  echo If gh-pages already exists and diverged, recreate it:
   echo   git push origin --delete gh-pages
   echo   scripts\deploy-pages.cmd
   exit /b 1
 )
 
 echo.
-echo Готово. Включи Pages: Settings -^> Pages -^> Deploy from a branch -^> gh-pages / root
+echo Done. Enable Pages: Settings, Pages, Deploy from a branch, gh-pages / root

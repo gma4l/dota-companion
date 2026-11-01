@@ -1,0 +1,12 @@
+# Единые переводы строк.
+# .cmd и .bat ОБЯЗАТЕЛЬНО с CRLF: cmd.exe ломается на LF.
+* text=auto
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.mjs text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.css text eol=lf
+*.html text eol=lf
